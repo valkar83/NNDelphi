@@ -1,0 +1,11 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<BorlandProject>
+	<Transactions>
+    <Transaction>2022/11/27 14:59:20.000.108,=C:\Users\valka\OneDrive\Documents\Embarcadero\Studio\Projets\Unit1.pas</Transaction>
+    <Transaction>2022/11/27 14:59:57.000.937,C:\Users\valka\OneDrive\Documents\Embarcadero\Studio\Projets\Unit1.dfm=C:\Users\valka\OneDrive\Documents\Embarcadero\Studio\Projets\LearningNN.dfm</Transaction>
+    <Transaction>2022/11/27 14:59:57.000.937,C:\Users\valka\OneDrive\Documents\Embarcadero\Studio\Projets\Unit1.pas=C:\Users\valka\OneDrive\Documents\Embarcadero\Studio\Projets\LearningNN.pas</Transaction>
+    <Transaction>2022/11/27 15:00:05.000.078,C:\Users\valka\OneDrive\Documents\Embarcadero\Studio\Projets\Project1.dproj=C:\Users\valka\OneDrive\Documents\Embarcadero\Studio\Projets\ReseauNN.dproj</Transaction>
+    <Transaction>2022/11/28 22:38:13.000.364,=C:\Users\valka\OneDrive\Documents\Embarcadero\Studio\Projets\Unit1.pas</Transaction>
+    <Transaction>2022/11/28 22:43:52.000.394,C:\Users\valka\OneDrive\Documents\Embarcadero\Studio\Projets\NeuralNetwork.pas=C:\Users\valka\OneDrive\Documents\Embarcadero\Studio\Projets\Unit1.pas</Transaction>
+  </Transactions>
+</BorlandProject>
