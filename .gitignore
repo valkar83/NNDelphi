@@ -1,2 +1,6 @@
 
 Win32/
+
+*.identcache
+
+__history/

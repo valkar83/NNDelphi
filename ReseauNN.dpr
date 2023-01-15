@@ -3,7 +3,8 @@ program ReseauNN;
 uses
   Vcl.Forms,
   LearningNN in 'LearningNN.pas' {Form1},
-  NeuralNetwork in 'NeuralNetwork.pas';
+  NeuralNetwork in 'NeuralNetwork.pas',
+  CoordDouble in 'CoordDouble.pas';
 
 {$R *.res}
 
