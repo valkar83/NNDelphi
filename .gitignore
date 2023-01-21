@@ -4,3 +4,5 @@ Win32/
 *.identcache
 
 __history/
+
+__recovery/

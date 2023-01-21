@@ -26,7 +26,7 @@ type
     procedure feedforward(VAR A : TDoubleMatrix);
     procedure prendreInverse(var Value: double);
     procedure StochasticGradientDescent(ATrainingData      : TList<TCoordDouble>;
-                                        AEta,    // Paramètre
+                                        AEta,    // Paramï¿½tre
                                         ANbPass, //EPoch en anglais
                                         ATailleDuMiniBatch : Integer;
                                         ATestData          : TList<TCoordDouble> = NIL);
@@ -59,6 +59,8 @@ var
   LZs,
   LActivations : TArray<TDoubleMatrix>;
 begin
+  remplirInitialiserTabMatrix(ADeltaNablaCoeff, FCoefficients);
+  remplirInitialiserTabMatrix(ADeltaNablaBiais, FBiais);
   SetLength(LZs, FListeNeuroneParCouche.Count);
   SetLength(LActivations, FListeNeuroneParCouche.Count);
 
@@ -185,14 +187,26 @@ procedure TNeuralNetwork.mettreAJourLotDeData(ALotData: TList<TCoordDouble>;
 
 var
   LNablas_Biais,
-  LNablas_Coefficients : TArray<TDoubleMatrix>;
-  LJ : Integer;
+  LNablas_Coefficients,
+  LDeltaNablas_Biais,
+  LDeltaNablas_Coefficients : TArray<TDoubleMatrix>;
+  LJ, LK : Integer;
 begin
   remplirInitialiserTabMatrix(LNablas_Coefficients, FCoefficients);
   remplirInitialiserTabMatrix(LNablas_Biais       , FBiais);
   for LJ := 0 to (ALotData.Count - 1) do
   begin
-    BackPropagation(ALotData[LJ], LNablas_Coefficients, LNablas_Biais);
+    BackPropagation(ALotData[LJ], LDeltaNablas_Coefficients, LDeltaNablas_Biais);
+    for LK := 0 to (Length(LDeltaNablas_Coefficients) - 1) do
+    begin
+      LNablas_Coefficients[LK] := LNablas_Coefficients[LK].Add(LDeltaNablas_Coefficients[LK]);
+      LNablas_Biais[LK]        := LNablas_Biais[LK].Add(LDeltaNablas_Biais[LK]);
+    end;
+  end;
+  for LJ := 0 to (FNbCouches - 1) do
+  begin
+    FCoefficients[LJ] := FCoefficients[LJ].Sub(LNablas_Coefficients[LJ].Scale((AEtat/ALotData.Count)));
+    FBiais[LJ] := FBiais[LJ].Sub(LNablas_Biais[LJ].Scale((AEtat/ALotData.Count)));
   end;
 end;
 
