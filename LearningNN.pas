@@ -20,19 +20,23 @@ var
 
 implementation
 Uses
+  CoordDouble,
+  lireLesDonneesJSON,
   System.Generics.Collections;
 {$R *.dfm}
 
 procedure TForm1.FormOnCreate(Sender: TObject);
 VAR
   LNeuralNetwork : TNeuralNetwork;
-  LList          : TList<Integer>;
+  LListeMatrix   : TList<TCoordDoubleMatrix>;
 begin
-  LList := TList<Integer>.Create;
-  LList.AddRange([1,2,3]);
-  LNeuralNetwork := TNeuralNetwork.Init(LList);
-  LList.free;
-  LNeuralNetwork.Free;
+  LListeMatrix := TList<TCoordDoubleMatrix>.Create;
+  Charger.ChargerDonneesEnJson(LListeMatrix);
+//  LList := TList<Integer>.Create;
+//  LList.AddRange([1,2,3]);
+//  LNeuralNetwork := TNeuralNetwork.Init(LList);
+//  LList.free;
+//  LNeuralNetwork.Free;
 end;
 
 end.

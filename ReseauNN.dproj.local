@@ -10,5 +10,14 @@
     <Transaction>2022/12/17 13:02:51.000.567,=C:\Users\valka\OneDrive\Documents\Embarcadero\Studio\Projets\ReseauNeuronal\NNDelphi\Unit1.pas</Transaction>
     <Transaction>2022/12/17 13:07:29.000.632,C:\Users\valka\OneDrive\Documents\Embarcadero\Studio\Projets\ReseauNeuronal\NNDelphi\Unit1.pas=C:\Users\valka\OneDrive\Documents\Embarcadero\Studio\Projets\ReseauNeuronal\NNDelphi\TCoordDouble.pas</Transaction>
     <Transaction>2022/12/17 13:07:50.000.826,C:\Users\valka\OneDrive\Documents\Embarcadero\Studio\Projets\ReseauNeuronal\NNDelphi\TCoordDouble.pas=C:\Users\valka\OneDrive\Documents\Embarcadero\Studio\Projets\ReseauNeuronal\NNDelphi\CoordDouble.pas</Transaction>
+    <Transaction>2023/01/29 20:12:01.000.788,=C:\Users\valka\OneDrive\Documents\Embarcadero\Studio\Projets\ReseauNeuronal\NNDelphi\Unit1.pas</Transaction>
+    <Transaction>2023/01/29 20:12:15.000.069,C:\Users\valka\OneDrive\Documents\Embarcadero\Studio\Projets\ReseauNeuronal\NNDelphi\Unit1.pas=C:\Users\valka\OneDrive\Documents\Embarcadero\Studio\Projets\ReseauNeuronal\NNDelphi\lireLesDonneesJSON.pas</Transaction>
   </Transactions>
+	<ProjectSortOrder AutoSort="0" SortType="0">
+    <File Path="LearningNN.pas"/>
+    <File Path="LearningNN.dfm"/>
+    <File Path="CoordDouble.pas"/>
+    <File Path="lireLesDonneesJSON.pas"/>
+    <File Path="NeuralNetwork.pas"/>
+  </ProjectSortOrder>
 </BorlandProject>

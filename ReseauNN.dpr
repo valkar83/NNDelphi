@@ -4,7 +4,8 @@ uses
   Vcl.Forms,
   LearningNN in 'LearningNN.pas' {Form1},
   NeuralNetwork in 'NeuralNetwork.pas',
-  CoordDouble in 'CoordDouble.pas';
+  CoordDouble in 'CoordDouble.pas',
+  lireLesDonneesJSON in 'lireLesDonneesJSON.pas';
 
 {$R *.res}
 
