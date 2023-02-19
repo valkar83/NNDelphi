@@ -18,10 +18,10 @@ type
     FUNCTION Sigmoid_Prime(Z: TDoubleMatrix): TDoubleMatrix;
   private
     FListeNeuroneParCouche : TList<Integer>;
-    FTrainingDate : TList<TCoordDoubleMatrix>;
     Function fragmenterTList(AList : TList<TCoordDoubleMatrix>; ATailleLot : Integer) : TList<TList<TCoordDoubleMatrix>>;
     procedure libererTListTList(AListList : TList<TList<TCoordDoubleMatrix>>);
     procedure shuffle(VAR AListeAMelanger : TList<TCoordDoubleMatrix>);
+    FUNCTION  evaluate(ATestData : TList<TCoordDoubleMatrix>) : Integer;
     procedure prendreExponentiel(var Value: double);
     procedure feedforward(VAR A : TDoubleMatrix);
     procedure prendreInverse(var Value: double);
@@ -97,6 +97,38 @@ begin
   Result := AResultatActivation.Sub(AY);
 end;
 
+FUNCTION TNeuralNetwork.evaluate(ATestData: TList<TCoordDoubleMatrix>) : Integer;
+  FUNCTION _RenvoyerIndiceMax(AMatrix : TDoubleMatrix) : Integer;
+  VAR
+    LDoubleMax : Double;
+    LI : Integer;
+  Begin
+    Result := 0;
+    LDoubleMax := 0;
+    FOR LI := 0 TO (AMatrix.Height - 1) DO
+    BEGIN
+      IF AMatrix.Items[0, LI] > LDoubleMax THEN
+      BEGIN
+        LDoubleMax := AMatrix.Items[0, LI];
+        Result := LI;
+      END;
+    END;
+  End;
+VAR
+  LMatriceDeSortie : TDoubleMatrix;
+  LValeurCalcule : Double;
+  LJ : Integer;
+begin
+  Result := 0;
+  For LJ := 0 TO (ATestData.Count - 1) DO
+  BEGIN
+    LMatriceDeSortie := ATestData[LJ].X;
+    feedforward(LMatriceDeSortie);
+    LValeurCalcule := _RenvoyerIndiceMax(LMatriceDeSortie);
+    IF (LValeurCalcule = ATestData[LJ].YDouble) THEN Inc(Result);
+  END;
+end;
+
 procedure TNeuralNetwork.feedforward(var A: TDoubleMatrix);
 VAR
   LI : Integer;
@@ -120,13 +152,14 @@ var
   LListeFragmentee : TList<TCoordDoubleMatrix>;
 begin
   Result := TList<TList<TCoordDoubleMatrix>>.Create;
+  LListeFragmentee := TList<TCoordDoubleMatrix>.Create;
+
   for LK := 0 to (AList.Count - 1) do
   BEGIN
     IF ((LK DIV ATailleLot) = 0) then
     Begin
-      LListeFragmentee := TList<TCoordDoubleMatrix>.Create;
+      IF (LK <> 0) THEN LListeFragmentee := TList<TCoordDoubleMatrix>.Create;
       LListeFragmentee.Add(AList[LK]);
-      if (LK <> 0) then Result.Add(LListeFragmentee);
     end
     else LListeFragmentee.Add(AList[LK]);
   END;
@@ -243,25 +276,25 @@ procedure TNeuralNetwork.StochasticGradientDescent(
                                          ATailleDuMiniBatch : Integer;
                                          ATestData          : TList<TCoordDoubleMatrix>);
 var
-  LJ, LK,
-  LCptTestData,
-  LCptTrainingData : Integer;
+  LChaineDebug : STRING;
+  LJ, LK : Integer;
   LLotsTrainingData : TList<TList<TCoordDoubleMatrix>>;
 begin
-  if Assigned(ATestData) then LCptTestData := ATestData.Count;
-
-  LCptTrainingData := ATrainingData.Count;
-
   for LJ := 0 to (ANbPass -1) do
   Begin
     shuffle(ATrainingData);
     LLotsTrainingData := fragmenterTList(ATrainingData, ATailleDuMiniBatch);
 
     for LK := 0 to (LLotsTrainingData.Count - 1) do
-    BEGIN
+      mettreAJourLotDeData(LLotsTrainingData[LK], AEta);
 
-    END;
 
+    IF Assigned(ATestData)
+    THEN LChaineDebug := 'Pass N° ' + IntToStr(LJ)    + ' : '
+                      + IntToStr(evaluate(ATestData)) + ' / '
+                      + IntToStr(ATestData.Count)
+    ELSE LChaineDebug := 'Pass N° ' + IntToStr(LJ) + ' terminé';
+    WriteLn(LChaineDebug);
 
     libererTListTList(LLotsTrainingData);
   End;
