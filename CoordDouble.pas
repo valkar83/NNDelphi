@@ -6,7 +6,7 @@ uses
   System.Types;
 type
   TCoordDoubleMatrix = record
-    X, Y    : TDoubleMatrix;
+    X, Y    : IMatrix;
     YDouble : Double;
   end;
 

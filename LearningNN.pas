@@ -29,14 +29,17 @@ procedure TForm1.FormOnCreate(Sender: TObject);
 VAR
   LNeuralNetwork : TNeuralNetwork;
   LListeMatrix   : TList<TCoordDoubleMatrix>;
+  LNbNeuronesParCouche : TList<Integer>;
+
 begin
   LListeMatrix := TList<TCoordDoubleMatrix>.Create;
   Charger.ChargerDonneesEnJson(LListeMatrix);
-//  LList := TList<Integer>.Create;
-//  LList.AddRange([1,2,3]);
-//  LNeuralNetwork := TNeuralNetwork.Init(LList);
-//  LList.free;
-//  LNeuralNetwork.Free;
+  LNbNeuronesParCouche := TList<Integer>.Create;
+  LNbNeuronesParCouche.Add(784);
+  LNbNeuronesParCouche.Add(30);
+  LNbNeuronesParCouche.Add(10);
+  LNeuralNetwork := TNeuralNetwork.Init(LNbNeuronesParCouche);
+  LNeuralNetwork.StochasticGradientDescent(LListeMatrix, 30, 10, 3);
 end;
 
 end.

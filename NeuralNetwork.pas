@@ -10,12 +10,17 @@ uses
 type
   TNeuralNetwork = CLASS (TObject)
     FNbCouches             : Integer;
-    FBiais                 : TArray<TDoubleMatrix>;
-    FCoefficients          : TArray<TDoubleMatrix>;
+    FBiais                 : TArray<IMatrix>;
+    FCoefficients          : TArray<IMatrix>;
 
     constructor Init(CONST AListeNeuroneParCouche : TList<Integer>);
-    FUNCTION Sigmoid(Z : TDoubleMatrix) : TDoubleMatrix;
-    FUNCTION Sigmoid_Prime(Z: TDoubleMatrix): TDoubleMatrix;
+    procedure StochasticGradientDescent(ATrainingData      : TList<TCoordDoubleMatrix>;
+                                        ANbPass, //EPoch en anglais
+                                        ATailleDuMiniBatch,
+                                        AEta      : Integer;    // Param�tre
+                                        ATestData : TList<TCoordDoubleMatrix> = NIL);
+    FUNCTION Sigmoid(Z : IMatrix) : IMatrix;
+    FUNCTION Sigmoid_Prime(Z: IMatrix): IMatrix;
   private
     FListeNeuroneParCouche : TList<Integer>;
     Function fragmenterTList(AList : TList<TCoordDoubleMatrix>; ATailleLot : Integer) : TList<TList<TCoordDoubleMatrix>>;
@@ -23,20 +28,16 @@ type
     procedure shuffle(VAR AListeAMelanger : TList<TCoordDoubleMatrix>);
     FUNCTION  evaluate(ATestData : TList<TCoordDoubleMatrix>) : Integer;
     procedure prendreExponentiel(var Value: double);
-    procedure feedforward(VAR A : TDoubleMatrix);
+    procedure feedforward(VAR A : IMatrix);
     procedure prendreInverse(var Value: double);
-    procedure StochasticGradientDescent(ATrainingData      : TList<TCoordDoubleMatrix>;
-                                        AEta,    // Param�tre
-                                        ANbPass, //EPoch en anglais
-                                        ATailleDuMiniBatch : Integer;
-                                        ATestData          : TList<TCoordDoubleMatrix> = NIL);
+    procedure decompterIntfCount(CONST AArray: TArray<IMatrix>);
     procedure mettreAJourLotDeData (ALotData : TList<TCoordDoubleMatrix>;
                                     AEtat    : Integer);
     procedure BackPropagation(CONST AData : TCoordDoubleMatrix;
-                              out ADeltaNablaCoeff, ADeltaNablaBiais : TArray<TDoubleMatrix>);
-    procedure remplirInitialiserTabMatrix(ATabMatrixARemplir,
-      ATabMatrixRef: TArray<TDoubleMatrix>);
-    Function cost_derivate(AResultatActivation, AY : TDoubleMatrix): TDoubleMatrix;
+                              out ADeltaNablaCoeff, ADeltaNablaBiais : TArray<IMatrix>);
+    procedure remplirInitialiserTabMatrix(VAR ATabMatrixARemplir : TArray<IMatrix>;
+                                          CONST ATabMatrixRef    : TArray<IMatrix>);
+    Function cost_derivate(CONST AResultatActivation : IMatrix; AY : IMatrix): IMatrix;
 
 
   end;
@@ -48,25 +49,26 @@ USes
 { TNeuralNetwork }
 
 procedure TNeuralNetwork.BackPropagation(const AData                  : TCoordDoubleMatrix;
-                                         out ADeltaNablaCoeff, ADeltaNablaBiais : TArray<TDoubleMatrix>);
+                                         out ADeltaNablaCoeff, ADeltaNablaBiais : TArray<IMatrix>);
 var
   LI : Integer;
   LZ,
   LSP,
   LDelta,
   LActivation,
-  LCoeffiecientsTrans : TDoubleMatrix;
+  LActivationTrans,
+  LCoeffiecientsTrans : IMatrix;
   LZs,
-  LActivations : TArray<TDoubleMatrix>;
+  LActivations : TArray<IMatrix>;
 begin
   remplirInitialiserTabMatrix(ADeltaNablaCoeff, FCoefficients);
   remplirInitialiserTabMatrix(ADeltaNablaBiais, FBiais);
   SetLength(LZs, FListeNeuroneParCouche.Count);
   SetLength(LActivations, FListeNeuroneParCouche.Count);
 
-  LActivation := AData.X;
-
-  for LI := 0 to (FListeNeuroneParCouche.Count - 1) do
+  LActivation := AData.X.Clone;
+  LActivations[0] := LActivation.Clone;
+  for LI := 1 to (FListeNeuroneParCouche.Count - 1) do
   begin
     LZ := FCoefficients[LI].Mult(LActivation);
     LZ.AddInPlace(FBiais[LI]);
@@ -74,31 +76,48 @@ begin
     LActivation := Sigmoid(LZ);
     LActivations[LI] := Sigmoid(LZ);
   end;
-  LDelta := cost_derivate(LActivations[Length(LActivations) - 1], AData.Y)
-            .ElementWiseMult(LZs[Length(LZs) - 1]);
+  LDelta := cost_derivate(LActivations[Length(LActivations) - 1], AData.Y);
+  LDelta.ElementWiseMultInplace(LZs[Length(LZs) - 1]);
   ADeltaNablaBiais[Length(ADeltaNablaBiais)-1] := LDelta;
-  ADeltaNablaCoeff[Length(ADeltaNablaCoeff)-1] := LDelta.Mult(LActivations[Length(LActivations) - 2].Transpose);
+  LActivationTrans := LActivations[Length(LActivations) - 2].Transpose;
+  ADeltaNablaCoeff[Length(ADeltaNablaCoeff)-1] := LDelta.Mult(LActivationTrans);
 
-  for LI := (Length(LActivations) - 2) DOWNTO 1 do
+  for LI := (FListeNeuroneParCouche.Count - 2) DOWNTO 1 do
   begin
     LSP := Sigmoid_Prime(LZs[LI]);
     LCoeffiecientsTrans := FCoefficients[LI + 1].Transpose;
-    LDelta := LCoeffiecientsTrans.ElementWiseMult(LDelta);
+    LDelta := LCoeffiecientsTrans.mult(LDelta);
     LDelta.ElementWiseMultInPlace(LSP);
     ADeltaNablaBiais[LI] := LDelta;
-    ADeltaNablaCoeff[LI] := LDelta.Mult(LActivations[LI-1].Transpose);
+    LActivationTrans     := LActivations[LI-1].Transpose;
+    ADeltaNablaCoeff[LI] := LDelta.Mult(LActivationTrans);
   end;
-
+  LCoeffiecientsTrans := NIL;
+  LActivationTrans := NIL;
+  LActivation := NIL;
+  LDelta := NIL;
+  LSP := NIL;
+  LZ := NIL;
+  decompterIntfCount(LZs);
+  decompterIntfCount(LActivations);
 end;
 
-function TNeuralNetwork.cost_derivate(AResultatActivation,
-  AY: TDoubleMatrix): TDoubleMatrix;
+function TNeuralNetwork.cost_derivate(CONST AResultatActivation : IMatrix; AY : IMatrix): IMatrix;
 begin
   Result := AResultatActivation.Sub(AY);
 end;
 
+procedure TNeuralNetwork.decompterIntfCount(const AArray: TArray<IMatrix>);
+VAR LI : Integer;
+begin
+  FOR LI := 0 TO (Length(AArray)-1) DO
+  BEGIN
+    AArray[LI] := NIL;
+  END;
+end;
+
 FUNCTION TNeuralNetwork.evaluate(ATestData: TList<TCoordDoubleMatrix>) : Integer;
-  FUNCTION _RenvoyerIndiceMax(AMatrix : TDoubleMatrix) : Integer;
+  FUNCTION _RenvoyerIndiceMax(AMatrix : IMatrix) : Integer;
   VAR
     LDoubleMax : Double;
     LI : Integer;
@@ -115,7 +134,7 @@ FUNCTION TNeuralNetwork.evaluate(ATestData: TList<TCoordDoubleMatrix>) : Integer
     END;
   End;
 VAR
-  LMatriceDeSortie : TDoubleMatrix;
+  LMatriceDeSortie : IMatrix;
   LValeurCalcule : Double;
   LJ : Integer;
 begin
@@ -129,11 +148,11 @@ begin
   END;
 end;
 
-procedure TNeuralNetwork.feedforward(var A: TDoubleMatrix);
+procedure TNeuralNetwork.feedforward(var A: IMatrix);
 VAR
   LI : Integer;
   LW , LB,
-  LWA, LWAB : TDoubleMatrix;
+  LWA, LWAB : IMatrix;
 begin
   for LI := 0 to (FListeNeuroneParCouche.Count - 1) do
   begin
@@ -148,22 +167,30 @@ end;
 function TNeuralNetwork.fragmenterTList(AList      : TList<TCoordDoubleMatrix>;
                                         ATailleLot : Integer): TList<TList<TCoordDoubleMatrix>>;
 var
-  LK : Integer;
+  LK,
+  LCompteur : Integer;
   LListeFragmentee : TList<TCoordDoubleMatrix>;
 begin
   Result := TList<TList<TCoordDoubleMatrix>>.Create;
   LListeFragmentee := TList<TCoordDoubleMatrix>.Create;
-
+  LCompteur := 0;
   for LK := 0 to (AList.Count - 1) do
   BEGIN
-    IF ((LK DIV ATailleLot) = 0) then
+    IF ((LCompteur MOD ATailleLot) = 0) then
     Begin
-      IF (LK <> 0) THEN LListeFragmentee := TList<TCoordDoubleMatrix>.Create;
-      LListeFragmentee.Add(AList[LK]);
+      IF (LCompteur <> 0) THEN
+      BEGIN
+        Result.Add(LListeFragmentee);
+        LListeFragmentee := TList<TCoordDoubleMatrix>.Create;
+      END
+      ELSE LListeFragmentee.Add(AList[LK]);
     end
     else LListeFragmentee.Add(AList[LK]);
+    Inc(LCompteur);
   END;
-  Result.Add(LListeFragmentee);
+  IF NOT(Result.Contains(LListeFragmentee)) THEN
+    IF LListeFragmentee.Count > 0 THEN
+      Result.Add(LListeFragmentee);
 end;
 
 constructor TNeuralNetwork.Init(CONST AListeNeuroneParCouche: TList<Integer>);
@@ -175,8 +202,8 @@ begin
   FListeNeuroneParCouche := AListeNeuroneParCouche;
   FNbCouches             := AListeNeuroneParCouche.Count;
 
-  setLength(FCoefficients, FListeNeuroneParCouche.Count - 1);
-  setLength(FBiais       , FListeNeuroneParCouche.Count - 1);
+  setLength(FCoefficients, FListeNeuroneParCouche.Count);
+  setLength(FBiais       , FListeNeuroneParCouche.Count);
 
   for LI := 1 to (FListeNeuroneParCouche.Count - 1) do
     FBiais[LI] := TDoubleMatrix.CreateRand(1, FListeNeuroneParCouche[LI], raSystem, 0);
@@ -185,7 +212,7 @@ begin
   begin
     LJ := LI - 1;
     FCoefficients[LI] := TDoubleMatrix.CreateRand(FListeNeuroneParCouche[LJ],
-                                           FListeNeuroneParCouche[LI], raSystem, 0);
+                                                  FListeNeuroneParCouche[LI], raSystem, 0);
   end;
 end;
 
@@ -203,12 +230,12 @@ begin
   FreeAndNil(AListList);
 end;
 
-PROCEDURE TNeuralNetwork.remplirInitialiserTabMatrix(ATabMatrixARemplir,
-                                       ATabMatrixRef     : TArray<TDoubleMatrix>);
+PROCEDURE TNeuralNetwork.remplirInitialiserTabMatrix(VAR ATabMatrixARemplir : TArray<IMatrix>;
+                                                     CONST ATabMatrixRef    : TArray<IMatrix>);
 var LI : Integer;
 BEGIN
   SetLength(ATabMatrixARemplir, Length(ATabMatrixRef));
-  for LI := 0 to (Length(ATabMatrixARemplir) - 1) do
+  for LI := 1 to (Length(ATabMatrixARemplir) - 1) do
     ATabMatrixARemplir[LI] := TDoubleMatrix.Create(ATabMatrixRef[LI].Width, ATabMatrixRef[LI].Height);
 END;
 
@@ -216,10 +243,12 @@ procedure TNeuralNetwork.mettreAJourLotDeData(ALotData: TList<TCoordDoubleMatrix
                                               AEtat: Integer);
 
 var
+  LMatrixScaleCoef,
+  LMatrixScaleBiais : IMatrix;
   LNablas_Biais,
   LNablas_Coefficients,
   LDeltaNablas_Biais,
-  LDeltaNablas_Coefficients : TArray<TDoubleMatrix>;
+  LDeltaNablas_Coefficients : TArray<IMatrix>;
   LJ, LK : Integer;
 begin
   remplirInitialiserTabMatrix(LNablas_Coefficients, FCoefficients);
@@ -227,17 +256,25 @@ begin
   for LJ := 0 to (ALotData.Count - 1) do
   begin
     BackPropagation(ALotData[LJ], LDeltaNablas_Coefficients, LDeltaNablas_Biais);
-    for LK := 0 to (Length(LDeltaNablas_Coefficients) - 1) do
+    for LK := 1 to (Length(LDeltaNablas_Coefficients) - 1) do
     begin
       LNablas_Coefficients[LK] := LNablas_Coefficients[LK].Add(LDeltaNablas_Coefficients[LK]);
       LNablas_Biais[LK]        := LNablas_Biais[LK].Add(LDeltaNablas_Biais[LK]);
     end;
   end;
-  for LJ := 0 to (FNbCouches - 1) do
+  for LJ := 1 to (FNbCouches - 1) do
   begin
-    FCoefficients[LJ] := FCoefficients[LJ].Sub(LNablas_Coefficients[LJ].Scale((AEtat/ALotData.Count)));
-    FBiais[LJ] := FBiais[LJ].Sub(LNablas_Biais[LJ].Scale((AEtat/ALotData.Count)));
+    LMatrixScaleCoef  := LNablas_Coefficients[LJ].Scale(AEtat/ALotData.Count);
+    LMatrixScaleBiais := LNablas_Biais[LJ].Scale(AEtat/ALotData.Count);
+    FCoefficients[LJ].SubInPlace(LMatrixScaleCoef);
+    FBiais[LJ].SubInPlace(LMatrixScaleBiais);
   end;
+  LMatrixScaleCoef  := NIL;
+  LMatrixScaleBiais := NIL;
+  decompterIntfCount(LNablas_Biais);
+  decompterIntfCount(LNablas_Coefficients);
+  decompterIntfCount(LDeltaNablas_Biais);
+  decompterIntfCount(LDeltaNablas_Coefficients);
 end;
 
 procedure TNeuralNetwork.prendreExponentiel(var Value: double);
@@ -256,24 +293,25 @@ begin
     AListeAMelanger.Exchange(LI, Random(LI+1));
 end;
 
-function TNeuralNetwork.Sigmoid(Z: TDoubleMatrix): TDoubleMatrix;
+function TNeuralNetwork.Sigmoid(Z: IMatrix): IMatrix;
 begin
   result := z.ElementwiseFunc(prendreExponentiel);
   result := result.add(1);
   result := result.ElementwiseFunc(prendreInverse);
 end;
 
-function TNeuralNetwork.Sigmoid_Prime(Z: TDoubleMatrix): TDoubleMatrix;
-var LMatrixUnite : TDoubleMatrix;
+function TNeuralNetwork.Sigmoid_Prime(Z: IMatrix): IMatrix;
+var LMatrixUnite : IMatrix;
 begin
   LMatrixUnite := TDoubleMatrix.Create(Z.Width, Z.Height, 1);
-  Result := Sigmoid(Z).Mult(LMatrixUnite.Sub(Sigmoid(Z)));
+  Result := Sigmoid(Z).ElementWiseMult(LMatrixUnite.Sub(Sigmoid(Z)));
 end;
 
 procedure TNeuralNetwork.StochasticGradientDescent(
                                          ATrainingData      : TList<TCoordDoubleMatrix>;
-                                         AEta, ANbPass,
-                                         ATailleDuMiniBatch : Integer;
+                                         ANbPass, //EPoch en anglais
+                                         ATailleDuMiniBatch,
+                                         AEta      : Integer;    // Param�tre
                                          ATestData          : TList<TCoordDoubleMatrix>);
 var
   LChaineDebug : STRING;

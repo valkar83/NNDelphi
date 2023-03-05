@@ -71,8 +71,8 @@ end;
 
 CLASS FUNCTION Charger.TransformerChiffreEnVecteur(CONST AChiffre: Integer): TDoubleMatrix;
 begin
-  Result := TDoubleMatrix.Create(10,1);
-  Result.Items[AChiffre, 0] := 1;
+  Result := TDoubleMatrix.Create(1,10);
+  Result.Items[0, AChiffre] := 1;
 end;
 
 end.
