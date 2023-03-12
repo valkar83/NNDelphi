@@ -27,9 +27,9 @@ Uses
 
 procedure TForm1.FormOnCreate(Sender: TObject);
 VAR
-  LNeuralNetwork : TNeuralNetwork;
-  LListeMatrix   : TList<TCoordDoubleMatrix>;
   LNbNeuronesParCouche : TList<Integer>;
+  LNeuralNetwork       : TNeuralNetwork;
+  LListeMatrix         : TList<TCoordDoubleMatrix>;
 
 begin
   LListeMatrix := TList<TCoordDoubleMatrix>.Create;

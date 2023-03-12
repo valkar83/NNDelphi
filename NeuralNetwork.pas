@@ -86,7 +86,7 @@ begin
   begin
     LSP := Sigmoid_Prime(LZs[LI]);
     LCoeffiecientsTrans := FCoefficients[LI + 1].Transpose;
-    LDelta := LCoeffiecientsTrans.mult(LDelta);
+    LDelta              := LCoeffiecientsTrans.mult(LDelta);
     LDelta.ElementWiseMultInPlace(LSP);
     ADeltaNablaBiais[LI] := LDelta;
     LActivationTrans     := LActivations[LI-1].Transpose;
@@ -301,10 +301,13 @@ begin
 end;
 
 function TNeuralNetwork.Sigmoid_Prime(Z: IMatrix): IMatrix;
-var LMatrixUnite : IMatrix;
+var
+  LMatrixUnite : IMatrix;
+  LMatrixUniteSubBySigmoid : IMatrix;
 begin
   LMatrixUnite := TDoubleMatrix.Create(Z.Width, Z.Height, 1);
-  Result := Sigmoid(Z).ElementWiseMult(LMatrixUnite.Sub(Sigmoid(Z)));
+  LMatrixUniteSubBySigmoid := LMatrixUnite.Sub(Sigmoid(Z));
+  Result := Sigmoid(Z).ElementWiseMult(LMatrixUniteSubBySigmoid);
 end;
 
 procedure TNeuralNetwork.StochasticGradientDescent(
