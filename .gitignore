@@ -7,4 +7,4 @@ __history/
 
 __recovery/
 
-Donnees/
+*.json
