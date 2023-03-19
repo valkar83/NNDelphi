@@ -25,6 +25,8 @@ type
     FUNCTION Sigmoid_Prime(Z: IMatrix): IMatrix;
   PUBLIC
     PROCEDURE MatrixTextToFile (AMatrix : IMatrix);
+    procedure feedforward(VAR A : IMatrix);
+    function RenvoyerIndiceMax(AMatrix: IMatrix): Integer;
   private
     FListeNeuroneParCouche : TList<Integer>;
     Function fragmenterTList(AList : TList<TCoordDoubleMatrix>; ATailleLot : Integer) : TList<TList<TCoordDoubleMatrix>>;
@@ -33,7 +35,6 @@ type
     FUNCTION  evaluate(ATestData : TList<TCoordDoubleMatrix>) : Integer;
     procedure prendreExponentiel(var Value: double);
     procedure prendreRandomValue(var Value: double);
-    procedure feedforward(VAR A : IMatrix);
     procedure prendreInverse(var Value: double);
     procedure decompterIntfCount(CONST AArray: TArray<IMatrix>);
     procedure mettreAJourLotDeData (ALotData : TList<TCoordDoubleMatrix>;
@@ -43,6 +44,7 @@ type
     procedure remplirInitialiserTabMatrix(VAR ATabMatrixARemplir : TArray<IMatrix>;
                                           CONST ATabMatrixRef    : TArray<IMatrix>);
     Function cost_derivate(CONST AResultatActivation : IMatrix; AY : IMatrix): IMatrix;
+
 
 
 
@@ -123,9 +125,7 @@ begin
     AArray[LI] := NIL;
   END;
 end;
-
-FUNCTION TNeuralNetwork.evaluate(ATestData: TList<TCoordDoubleMatrix>) : Integer;
-  FUNCTION _RenvoyerIndiceMax(AMatrix : IMatrix) : Integer;
+FUNCTION TNeuralNetwork.RenvoyerIndiceMax(AMatrix : IMatrix) : Integer;
   VAR
     LDoubleMax : Double;
     LI : Integer;
@@ -141,6 +141,8 @@ FUNCTION TNeuralNetwork.evaluate(ATestData: TList<TCoordDoubleMatrix>) : Integer
       END;
     END;
   End;
+FUNCTION TNeuralNetwork.evaluate(ATestData: TList<TCoordDoubleMatrix>) : Integer;
+
 VAR
   LMatriceDeSortie : IMatrix;
   LValeurCalcule : Double;
@@ -151,7 +153,7 @@ begin
   BEGIN
     LMatriceDeSortie := ATestData[LJ].X.Clone;
     feedforward(LMatriceDeSortie);
-    LValeurCalcule := _RenvoyerIndiceMax(LMatriceDeSortie);
+    LValeurCalcule := RenvoyerIndiceMax(LMatriceDeSortie);
     IF (LValeurCalcule = ATestData[LJ].YDouble) THEN Inc(Result);
   END;
 end;
