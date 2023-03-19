@@ -1,5 +1,7 @@
 ﻿unit NeuralNetwork;
-
+// L'algorithme ci-dessous est une traduction d'un algorithme de type reseau neuronaux
+// écrit en Python par Michael Nielsen sur http://neuralnetworksanddeeplearning.com/chap1.html
+// Cette traduction utilise la librairie de matrix de Mike Rabat https://github.com/mikerabat/mrmath
 interface
 uses
   Math,
@@ -238,6 +240,7 @@ begin
     LListe := AListList[LI];
     FOR LJ := 0 TO (LListe.Count - 1) DO
       TCoordDoubleMatrix(LListe[LJ]).MisANilMatrix;
+
     FreeAndNil(LListe);
   end;
   FreeAndNil(AListList);
