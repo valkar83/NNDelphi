@@ -10,7 +10,7 @@ USES
 TYPE
   Charger = CLASS
 
-    CLASS PROCEDURE ChargerDonneesEnJson(OUT AListeMatrix : TList<TCoordDoubleMatrix>);
+    CLASS PROCEDURE ChargerDonneesEnJson(OUT AListeMatrix : TList<TCoordDoubleMatrix>; ANomFichier : STRING);
     CLASS FUNCTION  TransformerChiffreEnVecteur(CONST AChiffre : Integer) : TDoubleMatrix;
   END;
 implementation
@@ -19,15 +19,18 @@ USES
   System.SysUtils;
 { Charger }
 
-CLASS PROCEDURE Charger.ChargerDonneesEnJson(OUT AListeMatrix : TList<TCoordDoubleMatrix>);
+CLASS PROCEDURE Charger.ChargerDonneesEnJson(OUT AListeMatrix : TList<TCoordDoubleMatrix>; ANomFichier : STRING);
 var
   Lfs : TFileStream;
+  LAdresseFichier : STRING;
   LJsonTextReader : TJsonTextReader;
   LStreamReader   : TStreamReader;
   LTab            : TArray<Double>;
   LMatrixDouble : TCoordDoubleMatrix;
 begin
-  Lfs := TFileStream.Create('..\..\Donnees\testData.json', fmOpenRead);
+  LAdresseFichier := '..\..\Donnees\%s.json';
+  LAdresseFichier := Format(LAdresseFichier, [ANomFichier]);
+  Lfs := TFileStream.Create(LAdresseFichier, fmOpenRead);
   LStreamReader := TStreamReader.Create(Lfs);
   LJsonTextReader := TJsonTextReader.Create(LStreamReader);
 
@@ -40,7 +43,8 @@ begin
         TJsonToken.StartObject :
         BEGIN
           LJsonTextReader.Read;
-          LMatrixDouble.Y := Charger.TransformerChiffreEnVecteur(StrToInt(LJsonTextReader.Value.AsString));
+          LMatrixDouble.YDouble := StrToInt(LJsonTextReader.Value.AsString);
+          LMatrixDouble.Y       := Charger.TransformerChiffreEnVecteur(StrToInt(LJsonTextReader.Value.AsString));
         END;
 
       END;

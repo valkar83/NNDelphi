@@ -21,6 +21,8 @@ type
                                         ATestData : TList<TCoordDoubleMatrix> = NIL);
     FUNCTION Sigmoid(Z : IMatrix) : IMatrix;
     FUNCTION Sigmoid_Prime(Z: IMatrix): IMatrix;
+  PUBLIC
+    PROCEDURE MatrixTextToFile (AMatrix : IMatrix);
   private
     FListeNeuroneParCouche : TList<Integer>;
     Function fragmenterTList(AList : TList<TCoordDoubleMatrix>; ATailleLot : Integer) : TList<TList<TCoordDoubleMatrix>>;
@@ -28,6 +30,7 @@ type
     procedure shuffle(VAR AListeAMelanger : TList<TCoordDoubleMatrix>);
     FUNCTION  evaluate(ATestData : TList<TCoordDoubleMatrix>) : Integer;
     procedure prendreExponentiel(var Value: double);
+    procedure prendreRandomValue(var Value: double);
     procedure feedforward(VAR A : IMatrix);
     procedure prendreInverse(var Value: double);
     procedure decompterIntfCount(CONST AArray: TArray<IMatrix>);
@@ -38,6 +41,7 @@ type
     procedure remplirInitialiserTabMatrix(VAR ATabMatrixARemplir : TArray<IMatrix>;
                                           CONST ATabMatrixRef    : TArray<IMatrix>);
     Function cost_derivate(CONST AResultatActivation : IMatrix; AY : IMatrix): IMatrix;
+
 
 
   end;
@@ -74,10 +78,12 @@ begin
     LZ.AddInPlace(FBiais[LI]);
     LZs[LI] := LZ;
     LActivation := Sigmoid(LZ);
-    LActivations[LI] := Sigmoid(LZ);
+    LActivations[LI] := LActivation.Clone;
   end;
+
   LDelta := cost_derivate(LActivations[Length(LActivations) - 1], AData.Y);
-  LDelta.ElementWiseMultInplace(LZs[Length(LZs) - 1]);
+  LSP := Sigmoid_Prime(LZs[Length(LZs) - 1]);
+  LDelta.ElementWiseMultInplace(LSP);
   ADeltaNablaBiais[Length(ADeltaNablaBiais)-1] := LDelta;
   LActivationTrans := LActivations[Length(LActivations) - 2].Transpose;
   ADeltaNablaCoeff[Length(ADeltaNablaCoeff)-1] := LDelta.Mult(LActivationTrans);
@@ -141,7 +147,7 @@ begin
   Result := 0;
   For LJ := 0 TO (ATestData.Count - 1) DO
   BEGIN
-    LMatriceDeSortie := ATestData[LJ].X;
+    LMatriceDeSortie := ATestData[LJ].X.Clone;
     feedforward(LMatriceDeSortie);
     LValeurCalcule := _RenvoyerIndiceMax(LMatriceDeSortie);
     IF (LValeurCalcule = ATestData[LJ].YDouble) THEN Inc(Result);
@@ -154,7 +160,7 @@ VAR
   LW , LB,
   LWA, LWAB : IMatrix;
 begin
-  for LI := 0 to (FListeNeuroneParCouche.Count - 1) do
+  for LI := 1 to (FListeNeuroneParCouche.Count - 1) do
   begin
     LW := FCoefficients [LI];
     LB := FBiais[LI];
@@ -180,6 +186,7 @@ begin
     Begin
       IF (LCompteur <> 0) THEN
       BEGIN
+        LListeFragmentee.Add(AList[LK]);
         Result.Add(LListeFragmentee);
         LListeFragmentee := TList<TCoordDoubleMatrix>.Create;
       END
@@ -206,28 +213,39 @@ begin
   setLength(FBiais       , FListeNeuroneParCouche.Count);
 
   for LI := 1 to (FListeNeuroneParCouche.Count - 1) do
-    FBiais[LI] := TDoubleMatrix.CreateRand(1, FListeNeuroneParCouche[LI], raSystem, 0);
+  begin
+    FBiais[LI] := TDoubleMatrix.Create(1, FListeNeuroneParCouche[LI], 1);
+    FBiais[LI].ElementwiseFuncInPlace(prendreRandomValue);
+  end;
 
   for LI := 1 to (FListeNeuroneParCouche.Count - 1) do
   begin
     LJ := LI - 1;
-    FCoefficients[LI] := TDoubleMatrix.CreateRand(FListeNeuroneParCouche[LJ],
-                                                  FListeNeuroneParCouche[LI], raSystem, 0);
+    FCoefficients[LI] := TDoubleMatrix.Create(FListeNeuroneParCouche[LJ],
+                                              FListeNeuroneParCouche[LI], 1);
+    FCoefficients[LI].ElementwiseFuncInPlace(prendreRandomValue);
   end;
 end;
 
 procedure TNeuralNetwork.libererTListTList(
   AListList: TList<TList<TCoordDoubleMatrix>>);
 VAR
-  LI     : Integer;
+  LI, LJ : Integer;
   LListe : TList<TCoordDoubleMatrix>;
 begin
   for LI := 0 to (AListList.Count - 1) do
   begin
     LListe := AListList[LI];
+    FOR LJ := 0 TO (LListe.Count - 1) DO
+      TCoordDoubleMatrix(LListe[LJ]).MisANilMatrix;
     FreeAndNil(LListe);
   end;
   FreeAndNil(AListList);
+end;
+
+procedure TNeuralNetwork.MatrixTextToFile(AMatrix: IMatrix);
+begin
+  MatrixToTxtFile('Voir',TDoubleMatrix(AMatrix));
 end;
 
 PROCEDURE TNeuralNetwork.remplirInitialiserTabMatrix(VAR ATabMatrixARemplir : TArray<IMatrix>;
@@ -279,13 +297,18 @@ end;
 
 procedure TNeuralNetwork.prendreExponentiel(var Value: double);
 begin
-  Value := exp(Value);
+  Value := exp(-Value);
 end;
 
 PROCEDURE TNeuralNetwork.prendreInverse(var Value: double);
 begin
   Value := 1 / Value;
 end;
+procedure TNeuralNetwork.prendreRandomValue(var Value: double);
+begin
+  Value := Value * RandG(0.0, 1.0);
+end;
+
 procedure TNeuralNetwork.shuffle(var AListeAMelanger: TList<TCoordDoubleMatrix>);
 var LI : Integer;
 begin
@@ -303,11 +326,13 @@ end;
 function TNeuralNetwork.Sigmoid_Prime(Z: IMatrix): IMatrix;
 var
   LMatrixUnite : IMatrix;
+  LMatrixSigmoid : IMatrix;
   LMatrixUniteSubBySigmoid : IMatrix;
 begin
   LMatrixUnite := TDoubleMatrix.Create(Z.Width, Z.Height, 1);
-  LMatrixUniteSubBySigmoid := LMatrixUnite.Sub(Sigmoid(Z));
-  Result := Sigmoid(Z).ElementWiseMult(LMatrixUniteSubBySigmoid);
+  LMatrixSigmoid := Sigmoid(Z);
+  LMatrixUniteSubBySigmoid := LMatrixUnite.Sub(LMatrixSigmoid);
+  Result := LMatrixSigmoid.ElementWiseMult(LMatrixUniteSubBySigmoid);
 end;
 
 procedure TNeuralNetwork.StochasticGradientDescent(
