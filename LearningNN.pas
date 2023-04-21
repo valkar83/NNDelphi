@@ -85,6 +85,7 @@ begin
   IF dlgOpenPic1.Execute(Self.Handle) THEN
   BEGIN
     imgChiffreADeviner.Picture.LoadFromFile(dlgOpenPic1.FileName);
+    imgChiffreADeviner.ScaleForPPI(Winapi.Windows.USER_DEFAULT_SCREEN_DPI);
     FOR LI := 0 TO (imgChiffreADeviner.Width - 1) DO
     BEGIN
       FOR LJ := 0 TO (imgChiffreADeviner.Height - 1) DO

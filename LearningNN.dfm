@@ -37,8 +37,8 @@ object Form1: TForm1
   object lbl2: TLabel
     Left = 286
     Top = 105
-    Width = 13
-    Height = 20
+    Width = 3
+    Height = 13
     Font.Charset = DEFAULT_CHARSET
     Font.Color = clWindowText
     Font.Height = -11
