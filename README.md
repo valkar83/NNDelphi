@@ -5,3 +5,4 @@
 4) Executer le script python avec un python (des fichiers au format JSON ont été générés), appeler la procédure ouvrirEtEnregistrerSousUnAutreFormat() (patienter quelques minutes pour la génération des fichiers)
 5) ouvrer Delphi et ajouter le chemin de recherche du dossier qui contient la librairie "mrmath"
 6) Activer la console dans le menu "projet" -> Options. Dans la modale, cliquer sur liaison sous Construction -> Compilateur Delphi
+7) Quand vous lancez l'application, bien s'assurer que la mise à l'échelle de votre écran est à 100 % (l'application ne résiste pas au zoom)
